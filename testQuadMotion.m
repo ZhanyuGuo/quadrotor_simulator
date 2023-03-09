@@ -4,221 +4,185 @@
 close all; clear; clc;
 
 %% add path
-addpath(genpath('./trajectory_generation/'), genpath('./controller'));
+addpath(genpath('./controller'));
 
-%% configurations
-display_ratio   = 1.00;
-figure_width    = 1920 / display_ratio;
-figure_height   = 1080 / display_ratio;
-figure_size     = 800 / display_ratio;
-figure_position = [
-    0.5*(figure_width - figure_size), ...
-    0.5*(figure_height - figure_size), ...
-    figure_size, ...
-    figure_size];
-
-f1 = figure(1);
-set(f1, 'position', figure_position);
-axis ([-5, 5, -5, 5, -1, 4]); 
-grid on; hold on;
-
-%% parameters
-global params;
-params = quadModel_readonly();
-x0      = zeros(13, 1);
-yaw0    = 0*pi/180;
-pitch0  = 0*pi/180;
-roll0   = 0*pi/180;
-x0(1)   = 0; % x
-x0(2)   = 0; % y
-x0(3)   = 0; % z
-x0(4)   = 0; % xdot
-x0(5)   = 0; % ydot
-x0(6)   = 0; % zdot
-Quat0   = R_to_quaternion(yrp_to_R([yaw0 roll0 pitch0])');
-x0(7)   = Quat0(1); % qw
-x0(8)   = Quat0(2); % qx
-x0(9)   = Quat0(3); % qy
-x0(10)  = Quat0(4); % qz
-x0(11)  = 0;        % p
-x0(12)  = 0;        % q
-x0(13)  = 0;        % r
-true_s  = x0;       % true state
-F       = params.mass * params.grav;
-M       = [0; 0; 0];
-
-% sensor parameters
-fnoise  = 0.1;  % standard deviation of gaussian noise for external disturbance (N)
-ifov    = 90;   % camera field of view  
-
+%% initialization
 % time
-time        = 0;      % current time
-vis_time    = 0;      % time of last visualization
-t_step      = 0.002;  % time step for solving equations of motion
-c_step      = 0.01;   % controller interval
-v_step      = 0.05;   % visualization interval
+time   = 0;      % current time
+s_time = 0;      % time of save
+t_step = 0.002;  % Time step for solving equations of motion
+s_step = 0.01;   % save interval
+c_step = 0.01;   % control time
+t_M    = 10;     % total simulate time
 
-% Visualization
-vis_init   = false;
 
-% h1
-thtraj     = [];
-thprop1    = [];
-thprop2    = [];
-thprop3    = [];
-thprop4    = [];
-tharm1     = [];
-tharm2     = [];
-thfov1     = [];
-thfov2     = [];
-thfov3     = [];
-thfov4     = [];
-ehtraj     = [];
-ehprop1    = [];
-ehprop2    = [];
-ehprop3    = [];
-ehprop4    = [];
-eharm1     = [];
-eharm2     = [];
-ehmap      = [];
-ehwindow   = [];
+params = quadModel_readonly();
+start  = [0; 0; 0];
+true_s = init_state(start);
 
-%% start simulation
+F = params.mass*params.grav;
+M = [0; 0; 0];
+% External disturbance
+params.Fd = zeros(3, 1);
+params.Md = zeros(3, 1);
+
+t_list = [];  % time span
+s_list = [];  % state
+u_list = [];  % input
+a_list = [];  % angle
+d_list = [];  % disturbance
+
+%% simulation
 disp('Start Simulation ...');
-while(1)
-    % external disturbance
-%     Fd = randn(3, 1) * fnoise;
-    Fd = zeros(3, 1);
-
-    % run simulation for cstep
-    timeint = time: t_step: time + c_step;
-%     timeint = [time, time + c_step];
-    [~, xsave] = ode45(@(t, s) quadEOM(t, s, F, M, Fd), timeint', true_s);
-    true_s = xsave(end, :)';
-    time = time + c_step;
-    
-    des_s = circle_trajectory(time, true_s);
-
-    [F, M] = controller(time, true_s, des_s);
-
-    if time - vis_time > v_step
-        ll = 0.175;
-        rr = 0.1;
-        ff = 0.3;
-        nprop = 40;
-        propangs = linspace(0,2*pi,nprop);
-        tR = QuatToRot(true_s(7:10))';
-        tpoint1 = tR*[ll;0;0];
-        tpoint2 = tR*[0;ll;0];
-        tpoint3 = tR*[-ll;0;0];
-        tpoint4 = tR*[0;-ll;0];
-        tproppts = rr*tR*[cos(propangs);sin(propangs);zeros(1,nprop)];
-        twp1 = true_s(1:3) + tpoint1;
-        twp2 = true_s(1:3) + tpoint2;
-        twp3 = true_s(1:3) + tpoint3;
-        twp4 = true_s(1:3) + tpoint4;
-        tprop1 = tproppts + twp1*ones(1,nprop);
-        tprop2 = tproppts + twp2*ones(1,nprop);
-        tprop3 = tproppts + twp3*ones(1,nprop);
-        tprop4 = tproppts + twp4*ones(1,nprop);
-        tfov0 = true_s(1:3);
-        tfov1 = tR * [ff;  ff * tan(ifov*pi/180/2);  ff * tan(ifov*pi/180/2)] + true_s(1:3);
-        tfov2 = tR * [ff;  ff * tan(ifov*pi/180/2); -ff * tan(ifov*pi/180/2)] + true_s(1:3);
-        tfov3 = tR * [ff; -ff * tan(ifov*pi/180/2); -ff * tan(ifov*pi/180/2)] + true_s(1:3);
-        tfov4 = tR * [ff; -ff * tan(ifov*pi/180/2);  ff * tan(ifov*pi/180/2)] + true_s(1:3);
-        eR = QuatToRot(des_s(7:10))';
-        epoint1 = eR*[ll;0;0];
-        epoint2 = eR*[0;ll;0];
-        epoint3 = eR*[-ll;0;0];
-        epoint4 = eR*[0;-ll;0];
-        eproppts = rr*eR*[cos(propangs);sin(propangs);zeros(1,nprop)];
-        ewp1 = des_s(1:3) + epoint1;
-        ewp2 = des_s(1:3) + epoint2;
-        ewp3 = des_s(1:3) + epoint3;
-        ewp4 = des_s(1:3) + epoint4;
-        eprop1 = eproppts + ewp1*ones(1,nprop);
-        eprop2 = eproppts + ewp2*ones(1,nprop);
-        eprop3 = eproppts + ewp3*ones(1,nprop);
-        eprop4 = eproppts + ewp4*ones(1,nprop);
-        if ~vis_init
-            thtraj = plot3(true_s(1), true_s(2), true_s(3), 'b-','LineWidth',3);
-            tharm1 = line([twp1(1),twp3(1)],[twp1(2),twp3(2)],[twp1(3),twp3(3)],'Color','b');
-            tharm2 = line([twp2(1),twp4(1)],[twp2(2),twp4(2)],[twp2(3),twp4(3)],'Color','b');
-            thprop1 = plot3(tprop1(1,:),tprop1(2,:),tprop1(3,:),'r-');
-            thprop2 = plot3(tprop2(1,:),tprop2(2,:),tprop2(3,:),'b-');
-            thprop3 = plot3(tprop3(1,:),tprop3(2,:),tprop3(3,:),'b-');
-            thprop4 = plot3(tprop4(1,:),tprop4(2,:),tprop4(3,:),'b-');
-            thfov1 = line([tfov0(1) tfov1(1) tfov2(1)], [tfov0(2) tfov1(2) tfov2(2)], [tfov0(3) tfov1(3) tfov2(3)],'Color','k');
-            thfov2 = line([tfov0(1) tfov2(1) tfov3(1)], [tfov0(2) tfov2(2) tfov3(2)], [tfov0(3) tfov2(3) tfov3(3)],'Color','k');
-            thfov3 = line([tfov0(1) tfov3(1) tfov4(1)], [tfov0(2) tfov3(2) tfov4(2)], [tfov0(3) tfov3(3) tfov4(3)],'Color','k');
-            thfov4 = line([tfov0(1) tfov4(1) tfov1(1)], [tfov0(2) tfov4(2) tfov1(2)], [tfov0(3) tfov4(3) tfov1(3)],'Color','k');
-            ehtraj = plot3(des_s(1), des_s(2), des_s(3), 'g-','LineWidth',3);
-            eharm1 = line([ewp1(1),ewp3(1)],[ewp1(2),ewp3(2)],[ewp1(3),ewp3(3)],'Color','g');
-            eharm2 = line([ewp2(1),ewp4(1)],[ewp2(2),ewp4(2)],[ewp2(3),ewp4(3)],'Color','g');
-            ehprop1 = plot3(eprop1(1,:),eprop1(2,:),eprop1(3,:),'m-');
-            ehprop2 = plot3(eprop2(1,:),eprop2(2,:),eprop2(3,:),'g-');
-            ehprop3 = plot3(eprop3(1,:),eprop3(2,:),eprop3(3,:),'g-');
-            ehprop4 = plot3(eprop4(1,:),eprop4(2,:),eprop4(3,:),'g-');
-        else
-            set(thtraj, 'XData', [get(thtraj, 'XData') true_s(1)]);
-            set(thtraj, 'YData', [get(thtraj, 'YData') true_s(2)]);
-            set(thtraj, 'ZData', [get(thtraj, 'ZData') true_s(3)]);
-            set(thprop1,'XData',tprop1(1,:));
-            set(thprop1,'YData',tprop1(2,:));
-            set(thprop1,'ZData',tprop1(3,:));
-            set(thprop2,'XData',tprop2(1,:));
-            set(thprop2,'YData',tprop2(2,:));
-            set(thprop2,'ZData',tprop2(3,:));
-            set(thprop3,'XData',tprop3(1,:));
-            set(thprop3,'YData',tprop3(2,:));
-            set(thprop3,'ZData',tprop3(3,:));
-            set(thprop4,'XData',tprop4(1,:));
-            set(thprop4,'YData',tprop4(2,:));
-            set(thprop4,'ZData',tprop4(3,:));
-            set(tharm1,'XData',[twp1(1),twp3(1)]);
-            set(tharm1,'YData',[twp1(2),twp3(2)]);
-            set(tharm1,'ZData',[twp1(3),twp3(3)]);
-            set(tharm2,'XData',[twp2(1),twp4(1)]);
-            set(tharm2,'YData',[twp2(2),twp4(2)]);
-            set(tharm2,'ZData',[twp2(3),twp4(3)]);
-            set(thfov1,'XData',[tfov0(1) tfov1(1) tfov2(1)]);
-            set(thfov1,'YData',[tfov0(2) tfov1(2) tfov2(2)]);
-            set(thfov1,'ZData',[tfov0(3) tfov1(3) tfov2(3)]);
-            set(thfov2,'XData',[tfov0(1) tfov2(1) tfov3(1)]);
-            set(thfov2,'YData',[tfov0(2) tfov2(2) tfov3(2)]);
-            set(thfov2,'ZData',[tfov0(3) tfov2(3) tfov3(3)]);
-            set(thfov3,'XData',[tfov0(1) tfov3(1) tfov4(1)]);
-            set(thfov3,'YData',[tfov0(2) tfov3(2) tfov4(2)]);
-            set(thfov3,'ZData',[tfov0(3) tfov3(3) tfov4(3)]);
-            set(thfov4,'XData',[tfov0(1) tfov4(1) tfov1(1)]);
-            set(thfov4,'YData',[tfov0(2) tfov4(2) tfov1(2)]);
-            set(thfov4,'ZData',[tfov0(3) tfov4(3) tfov1(3)]);
-            set(ehtraj, 'XData', [get(ehtraj, 'XData') des_s(1)]);
-            set(ehtraj, 'YData', [get(ehtraj, 'YData') des_s(2)]);
-            set(ehtraj, 'ZData', [get(ehtraj, 'ZData') des_s(3)]);
-            set(ehprop1,'XData',eprop1(1,:));
-            set(ehprop1,'YData',eprop1(2,:));
-            set(ehprop1,'ZData',eprop1(3,:));
-            set(ehprop2,'XData',eprop2(1,:));
-            set(ehprop2,'YData',eprop2(2,:));
-            set(ehprop2,'ZData',eprop2(3,:));
-            set(ehprop3,'XData',eprop3(1,:));
-            set(ehprop3,'YData',eprop3(2,:));
-            set(ehprop3,'ZData',eprop3(3,:));
-            set(ehprop4,'XData',eprop4(1,:));
-            set(ehprop4,'YData',eprop4(2,:));
-            set(ehprop4,'ZData',eprop4(3,:));
-            set(eharm1,'XData',[ewp1(1),ewp3(1)]);
-            set(eharm1,'YData',[ewp1(2),ewp3(2)]);
-            set(eharm1,'ZData',[ewp1(3),ewp3(3)]);
-            set(eharm2,'XData',[ewp2(1),ewp4(1)]);
-            set(eharm2,'YData',[ewp2(2),ewp4(2)]);
-            set(eharm2,'ZData',[ewp2(3),ewp4(3)]);
-        end
-        drawnow;
-        vis_time = time;
-        vis_init = true;
+while (1)
+    if time > t_M
+        disp('Finished!');
+        break
     end
+
+    % impuse F
+%     if time >= t_M / 2 && time <= t_M / 2 + s_step
+%         F = 1e6;
+%     else
+%         F = params.mass*params.grav;
+%     end
+
+    % step F
+%     if time >= t_M / 2
+%         F = 1.1*params.mass*params.grav;
+%     else
+%         F = params.mass*params.grav;
+%     end
+    
+    % sin F
+%     F = sin(time) + params.mass*params.grav;
+
+    % impuse Mx
+%     if time >= t_M / 2 && time <= t_M / 2 + s_step
+%         M(1) = 1e6;
+%     else
+%         M(1) = 0;
+%     end
+
+    % step Mx
+%     if time >= t_M / 2
+%         M(1) = 0.005;
+%     else
+%         M(1) = 0;
+%     end
+
+    % sin Mx
+%     M(1) = 0.005 * sin(time);
+
+    % impuse Mz
+%     if time >= t_M / 2 && time <= t_M / 2 + s_step
+%         M(3) = 5;
+%     else
+%         M(3) = 0;
+%     end
+
+    % step Mz
+%     if time >= t_M / 2
+%         M(3) = 0.005;
+%     else
+%         M(3) = 0;
+%     end
+
+    % sin Mz
+%     M(3) = 0.005 * sin(time);
+
+    % impuse Fdx
+%     if time >= t_M / 2 && time <= t_M / 2 + s_step
+%         params.Fd(1) = 1e6;
+%     else
+%         params.Fd(1) = 0;
+%     end
+
+    % step Fdx
+%     if time >= t_M / 2
+%         params.Fd(1) = 1;
+%     else
+%         params.Fd(1) = 0;
+%     end
+
+    % sin Fdx
+%     params.Fd(1) = sin(time);
+
+    timeint = time: t_step: time + c_step;
+    [~, xsave] = ode45(@(t, s) quadEOM_readonly(t, s, F, M, params), timeint', true_s);
+    true_s = xsave(end, :)';
+    
+    if time - s_time >= s_step
+        s_time = time;
+        t_list = [t_list; time];
+        s_list = [s_list; true_s'];
+        u_list = [u_list; F, M'];
+        a = RotToRPY_ZXY_wrapper(QuatToRot(true_s(7:10)))';
+        a_list = [a_list; a];
+        d_list = [d_list; params.Fd', params.Md'];
+    end
+    time = time + c_step;
 end
 
+%% visualization
+f1 = figure(1); sgtitle('Quadrotor Simulation');
+subplot(4, 2, 1), hold on, grid on;
+plot(t_list, s_list(:, 1), 'Color', 'r');
+plot(t_list, s_list(:, 2), 'Color', 'g');
+plot(t_list, s_list(:, 3), 'Color', 'b');
+xlabel('t (s)'), ylabel('Position (m)');
+legend('x', 'y', 'z');
+hold off;
 
+subplot(4, 2, 2), hold on, grid on;
+plot(t_list, u_list(:, 1));
+xlabel('t (s)'), ylabel('Force (N)');
+hold off;
+
+subplot(4, 2, 3), hold on, grid on;
+plot(t_list, s_list(:, 4), 'Color', 'r');
+plot(t_list, s_list(:, 5), 'Color', 'g');
+plot(t_list, s_list(:, 6), 'Color', 'b');
+xlabel('t (s)'), ylabel('Velocity (m/s)');
+legend('vx', 'vy', 'vz');
+hold off;
+
+subplot(4, 2, 4), hold on, grid on;
+plot(t_list, u_list(:, 2), 'Color', 'r');
+plot(t_list, u_list(:, 3), 'Color', 'g');
+plot(t_list, u_list(:, 4), 'Color', 'b');
+xlabel('t (s)'), ylabel('Moment (N*m)');
+legend('Mx', 'My', 'Mz');
+hold off;
+
+subplot(4, 2, 5), hold on, grid on;
+plot(t_list, a_list(:, 1), 'Color', 'r');
+plot(t_list, a_list(:, 2), 'Color', 'g');
+plot(t_list, a_list(:, 3), 'Color', 'b');
+xlabel('t (s)'), ylabel('Angle (rad)');
+legend('\phi', '\theta', '\psi');
+hold off;
+
+subplot(4, 2, 6), hold on, grid on;
+plot(t_list, d_list(:, 1), 'Color', 'r');
+plot(t_list, d_list(:, 2), 'Color', 'g');
+plot(t_list, d_list(:, 3), 'Color', 'b');
+xlabel('t (s)'), ylabel('Disturbe Force (N)');
+legend('Fdx', 'Fdy', 'Fdz');
+hold off;
+
+subplot(4, 2, 7), hold on, grid on;
+plot(t_list, s_list(:, 11), 'Color', 'r');
+plot(t_list, s_list(:, 12), 'Color', 'g');
+plot(t_list, s_list(:, 13), 'Color', 'b');
+xlabel('t (s)'), ylabel('Angular Velocity (rad/s)');
+legend('$\dot{\phi}$', '$\dot{\theta}$', '$\dot{\psi}$', 'Interpreter', 'latex');
+hold off;
+
+subplot(4, 2, 8), hold on, grid on;
+plot(t_list, d_list(:, 4), 'Color', 'r');
+plot(t_list, d_list(:, 5), 'Color', 'g');
+plot(t_list, d_list(:, 6), 'Color', 'b');
+xlabel('t (s)'), ylabel('Disturbe Moment (N*m)');
+legend('Mdx', 'Mdy', 'Mdz');
+hold off;
