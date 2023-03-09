@@ -1,4 +1,4 @@
-function [phi,theta,psi] = RotToRPY_ZXY(R)
+function angles = RotToRPY_ZXY_wrapper(R)
 %RotToRPY_ZXY Extract Roll, Pitch, Yaw from a world-to-body Rotation Matrix
 %   The rotation matrix in this function is world to body [bRw] you will
 %   need to transpose the matrix if you have a body to world [wRb] such
@@ -13,8 +13,6 @@ function [phi,theta,psi] = RotToRPY_ZXY(R)
 %           sin(psi)*sin(theta) - cos(psi)*cos(theta)*sin(phi),
 %           cos(phi)*cos(theta)]
 
-phi = asin(R(2,3));
-psi = atan2(-R(2,1)/cos(phi),R(2,2)/cos(phi));
-theta = atan2(-R(1,3)/cos(phi),R(3,3)/cos(phi));
-
+[phi,theta,psi] = RotToRPY_ZXY(R);
+ angles = [phi;theta;psi];
 end

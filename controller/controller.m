@@ -1,20 +1,23 @@
 function [F, M] = controller(t, s, s_des)
+%%
+% @brief: simple linear controller
+%%
     global params;
     m = params.mass;
     g = params.grav;
     I = params.I;
 
     % current State
-    x       = s(1);
-    y       = s(2);
-    z       = s(3);
-    dx      = s(4);
-    dy      = s(5);
-    dz      = s(6);
-    quat    = s(7: 10);
-    p       = s(11);
-    q       = s(12);
-    r       = s(13);
+    x    = s(1);
+    y    = s(2);
+    z    = s(3);
+    dx   = s(4);
+    dy   = s(5);
+    dz   = s(6);
+    quat = s(7:10);
+    p    = s(11);
+    q    = s(12);
+    r    = s(13);
 
     [phi, theta, psi] = RotToRPY_ZXY(quaternion_to_R(quat));
 
@@ -33,7 +36,7 @@ function [F, M] = controller(t, s, s_des)
     dx_des      = s_des(4);
     dy_des      = s_des(5);
     dz_des      = s_des(6);
-    quat_des    = s_des(7: 10);
+    quat_des    = s_des(7:10);
     [~, ~, psi_des] = RotToRPY_ZXY(quaternion_to_R(quat_des));
     ddx_des     = 0;
     ddy_des     = 0;
@@ -42,7 +45,7 @@ function [F, M] = controller(t, s, s_des)
     dtheta_des  = 0;
     dpsi_des    = 0;
 
-    % PID Parameter
+    % PD Parameter
     Kd_x = 10;  % 10
     Kp_x = 10;  % 10
     Kd_y = 10;
@@ -67,13 +70,19 @@ function [F, M] = controller(t, s, s_des)
     theta_des = 1/g * (ddx * cos(psi) + ddy * sin(psi));
 
     % yaw
-    if(((psi_des - psi) > -pi) && ((psi_des - psi) < pi))
-        e_psi = psi_des - psi;
-    elseif((psi_des - psi) <= -pi)
-        e_psi = psi_des - psi + 2 * pi;
-    elseif((psi_des - psi) >= pi)
-        e_psi = psi_des - psi - 2 * pi;
+    e_psi = psi_des - psi;
+    if e_psi <= -pi
+        e_psi = e_psi + 2*pi;
+    elseif e_psi >= pi
+        e_psi = e_psi - 2*pi;
     end
+%     if(((psi_des - psi) > -pi) && ((psi_des - psi) < pi))
+%         e_psi = psi_des - psi;
+%     elseif((psi_des - psi) <= -pi)
+%         e_psi = psi_des - psi + 2 * pi;
+%     elseif((psi_des - psi) >= pi)
+%         e_psi = psi_des - psi - 2 * pi;
+%     end
 
     % pitch
     if(((theta_des-theta) > -pi) && ((theta_des - theta) < pi))

@@ -1,6 +1,7 @@
-% *** Internal Use Only - Do Not Distribute ***
-
 function R = yrp_to_R(yrp)
+%%
+% @brief: from ypr angle to rotiation matrix
+%%
     y = yrp(1);
     r = yrp(2);
     p = yrp(3);

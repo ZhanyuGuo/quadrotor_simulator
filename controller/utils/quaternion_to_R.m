@@ -1,10 +1,11 @@
-% *** Internal Use Only - Do Not Distribute ***
-
 function R = quaternion_to_R(q)
+%%
+% @brief: tranfrom rotation matrix from quaternion
+%%
+    % normalize q
+    q = q/norm(q);
     
-    q = q/norm(q); % Ensure Q has unit norm
-    
-    % Set up convenience variables
+    % set up convenience variables
     w = q(1); x = q(2); y = q(3); z = q(4);
     w2 = w^2; x2 = x^2; y2 = y^2; z2 = z^2;
     xy = x*y; xz = x*z; yz = y*z;

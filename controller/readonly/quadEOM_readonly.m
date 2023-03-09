@@ -1,4 +1,4 @@
-function sdot = quadEOM(t, s, F, M, Fd)
+function sdot = quadEOM_readonly(t, s, F, M, Fd)
 %%
 % Solve quadrotor equation of motion, used by the ode solver.
 %
@@ -6,9 +6,8 @@ function sdot = quadEOM(t, s, F, M, Fd)
 % t      -  1 x 1, time
 % s      - 13 x 1, state vector = [x, y, z, xd, yd, zd, qw, qx, qy, qz, p, q, r]
 % F      -  1 x 1, thrust output from controller (only used in simulation)
-% Fd     -  3 x 1, noise on three axis
+% Fd     -  3 x 1, noise on 3 axis
 % M      -  3 x 1, moment output from controller (only used in simulation)
-% params - struct, output from nanoplus() and whatever parameters you want to pass in
 %
 % OUTPUTS:
 % sdot   - 13 x 1, derivative of state vector s
@@ -17,24 +16,24 @@ function sdot = quadEOM(t, s, F, M, Fd)
     
     %************ EQUATIONS OF MOTION ************************
     % Limit the force and moments due to actuator limits
-    A = [0.25,                     0, -0.5/params.armlength;
-         0.25,  0.5/params.armlength,                     0;
-         0.25,                     0,  0.5/params.armlength;
+    A = [0.25,                     0, -0.5/params.armlength; ...
+         0.25,  0.5/params.armlength,                     0; ...
+         0.25,                     0,  0.5/params.armlength; ...
          0.25, -0.5/params.armlength,                     0];
     
     prop_thrusts = A*[F;M(1:2)]; % Not using moment about Z-axis for limits
     prop_thrusts_clamped = max(min(prop_thrusts, params.maxF/4), params.minF/4);
     
-    B = [                 1,                1,                 1,                 1;
-                          0, params.armlength,                 0, -params.armlength;
+    B = [                 1,                1,                 1,                 1; ...
+                          0, params.armlength,                 0, -params.armlength; ...
          -params.armlength,                 0, params.armlength,                 0];
     F = B(1,:)*prop_thrusts_clamped;
     M = [B(2:3,:)*prop_thrusts_clamped; M(3)];
     
     % Assign states
-    % x = s(1);
-    % y = s(2);
-    % z = s(3);
+    x = s(1);
+    y = s(2);
+    z = s(3);
     xdot = s(4);
     ydot = s(5);
     zdot = s(6);
@@ -51,19 +50,19 @@ function sdot = quadEOM(t, s, F, M, Fd)
     wRb = bRw';
     
     % Acceleration
-    accel = 1 / params.mass * (wRb * ([0; 0; F] + Fd) - [0; 0; params.mass * params.grav]);
+    accel = 1/params.mass*(wRb*([0; 0; F] + Fd) - [0; 0; params.mass*params.grav]);
     
     % Angular velocity
-    K_quat = 2; %this enforces the magnitude 1 constraint for the quaternion
+    K_quat = 2; % this enforces the magnitude 1 constraint for the quaternion
     quaterror = 1 - (qW^2 + qX^2 + qY^2 + qZ^2);
     qdot = -1/2*[0, -p, -q, -r;...
                  p,  0, -r,  q;...
                  q,  r,  0, -p;...
-                 r, -q,  p,  0] * quat + K_quat*quaterror * quat;
+                 r, -q,  p,  0]*quat + K_quat*quaterror*quat;
     
     % Angular acceleration
-    omega = [p;q;r];
-    pqrdot   = params.invI * (M - cross(omega, params.I*omega));
+    omega = [p; q; r];
+    pqrdot = params.invI*(M - cross(omega, params.I*omega));
     
     % Assemble sdot
     sdot = zeros(13,1);
