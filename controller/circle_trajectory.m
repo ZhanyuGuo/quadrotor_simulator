@@ -19,9 +19,9 @@ function s_des = circle_trajectory(t, true_s)
     
     %desired yaw angle in the flight
     des_yaw = mod(0.1 * pi * t,2 * pi);
-    ypr = [des_yaw, 0.0, 0.0];
+%     ypr = [des_yaw, 0.0, 0.0];
 %     Rot = ypr_to_R(ypr);
-    Rot = yrp_to_R(ypr);
-    q_des = R_to_quaternion(Rot);
+    Rot = RPYtoRot_ZXY(0, 0, des_yaw)';
+    q_des = RotToQuat(Rot);
     s_des(7:10) = q_des;
 end

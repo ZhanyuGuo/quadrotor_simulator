@@ -24,12 +24,12 @@ function sdot = quadEOM_readonly(t, s, F, M, params)
 
     prop_thrusts = A*[F; M(1:2)]; % Not using moment about Z-axis for limits
     prop_thrusts_clamped = max(min(prop_thrusts, params.maxF/4), params.minF/4);
-    
+
     B = [         1,         1,         1,          1; ...
                   0, armlength,         0, -armlength; ...
          -armlength,         0, armlength,          0];
-    F = B(1,:)*prop_thrusts_clamped;
-    M = [B(2:3,:)*prop_thrusts_clamped; M(3)];
+    F = B(1, :)*prop_thrusts_clamped;
+    M = [B(2:3, :)*prop_thrusts_clamped; M(3)];
 
     % Assign states
     x  = s(1);
@@ -57,14 +57,14 @@ function sdot = quadEOM_readonly(t, s, F, M, params)
     K_quat = 2; % this enforces the magnitude 1 constraint for the quaternion
     quaterror = 1 - (qW^2 + qX^2 + qY^2 + qZ^2);
     dq = -1/2*[0, -p, -q, -r; ...
-                 p,  0, -r,  q; ...
-                 q,  r,  0, -p; ...
-                 r, -q,  p,  0]*quat + K_quat*quaterror*quat;
+               p,  0, -r,  q; ...
+               q,  r,  0, -p; ...
+               r, -q,  p,  0]*quat + K_quat*quaterror*quat;
 
     % Angular acceleration
     omega = [p; q; r];
     dpqr = params.invI*(M - cross(omega, params.I*omega));
-    
+
     % Assemble sdot
     sdot = zeros(13,1);
     sdot(1)  = dx;
@@ -80,5 +80,4 @@ function sdot = quadEOM_readonly(t, s, F, M, params)
     sdot(11) = dpqr(1);
     sdot(12) = dpqr(2);
     sdot(13) = dpqr(3);
-
 end

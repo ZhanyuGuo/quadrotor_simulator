@@ -19,7 +19,7 @@ function [F, M] = controller(t, s, s_des)
     q    = s(12);
     r    = s(13);
 
-    [phi, theta, psi] = RotToRPY_ZXY(quaternion_to_R(quat));
+    [phi, theta, psi] = RotToRPY_ZXY(QuatToRot(quat));
 
     R_ab    = [cos(theta), 0, -cos(phi)*sin(theta);
                         0, 1,             sin(phi);
@@ -37,7 +37,7 @@ function [F, M] = controller(t, s, s_des)
     dy_des      = s_des(5);
     dz_des      = s_des(6);
     quat_des    = s_des(7:10);
-    [~, ~, psi_des] = RotToRPY_ZXY(quaternion_to_R(quat_des));
+    [~, ~, psi_des] = RotToRPY_ZXY(QuatToRot(quat_des));
     ddx_des     = 0;
     ddy_des     = 0;
     ddz_des     = 0;

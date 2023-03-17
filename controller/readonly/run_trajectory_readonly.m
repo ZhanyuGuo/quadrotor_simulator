@@ -17,7 +17,8 @@ x0(3)  = 0; %z
 x0(4)  = 0; %xdot
 x0(5)  = 0; %ydot
 x0(6)  = 0; %zdot
-Quat0  = R_to_quaternion(yrp_to_R([yaw0 pitch0 roll0])');
+% Quat0  = R_to_quaternion(yrp_to_R([yaw0 pitch0 roll0])');
+Quat0  = RotToQuat(RPYtoRot_ZXY(roll0, pitch0, yaw0)');
 x0(7)  = Quat0(1);  %qw
 x0(8)  = Quat0(2);  %qx
 x0(9)  = Quat0(3);  %qy
@@ -86,13 +87,13 @@ ehpz       = [];
 % Start Simulation run_trajectory_readonly
 disp('Start Simulation ...');
 while (1)
-    
     % External disturbance
-    Fd = randn(3,1) * fnoise;
-    
+    params.Fd = randn(3,1) * fnoise;
+    params.Md = zeros(3, 1);
+
     % Run simulation for cstep
     timeint = time:tstep:time+cstep;
-    [~, xsave] = ode45(@(t, s) quadEOM_readonly(t, s, F, M, Fd), timeint', true_s);
+    [~, xsave] = ode45(@(t, s) quadEOM_readonly(t, s, F, M, params), timeint', true_s);
     true_s = xsave(end,:)';
     time = time + cstep;
     
@@ -243,7 +244,7 @@ while (1)
         %% Plot roll orientation
         subplot(h2);          
 %        true_ypr = R_to_ypr(quaternion_to_R(true_s(7:10))')*180/pi;      
-        [true_r,true_p,true_y] = RotToRPY_ZXY(quaternion_to_R(true_s(7:10))');      
+        [true_r,true_p,true_y] = RotToRPY_ZXY(QuatToRot(true_s(7:10))');      
         true_ypr = [true_y,true_p,true_r] *180/pi;
         if ~vis_init 
             hold on;            
