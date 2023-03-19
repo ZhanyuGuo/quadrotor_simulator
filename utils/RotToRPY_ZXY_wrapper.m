@@ -14,5 +14,5 @@ function angles = RotToRPY_ZXY_wrapper(R)
 %           cos(phi)*cos(theta)]
 
 [phi,theta,psi] = RotToRPY_ZXY(R);
- angles = [phi;theta;psi];
+angles = [phi;theta;psi];
 end

@@ -1,3 +1,5 @@
+%% test quadrotor trajectory generation and tracking in 3d
+
 clc; clear; close all;
 
 % path
