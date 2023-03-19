@@ -196,10 +196,9 @@ figure_position = [
     figure_size, ...
     figure_size];
 
-f2 = figure(2);
-set(f2, 'position', figure_position);
-% axis ([-10, 10, -10, 10, -10, 10]);
+f2 = figure(2); set(f2, 'position', figure_position);
 grid on; hold on; view(45, 45); axis vis3d;
+
 vis_init = false;
 ifov = 90;  % Camera field of view
 

@@ -1,11 +1,11 @@
-function [ s ] = init_state( start )
+function s = init_state( start )
 %INIT_STATE Initialize 13 x 1 state vector
 
 phi0   = 0.0;
 theta0 = 0.0;
 psi0   = 0.0;
-Rot0   = RPYtoRot_ZXY(phi0, theta0, psi0);
-Quat0  = RotToQuat(Rot0);
+bRw0   = RPYtoRot_ZXY(phi0, theta0, psi0); 
+Quat0  = RotToQuat(bRw0);
 
 s     = zeros(13, 1);  % state
 s(1)  = start(1);      % x

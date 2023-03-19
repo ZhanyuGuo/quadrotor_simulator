@@ -6,7 +6,7 @@ ta    = zeros(n_seg, 1);          % time distribution
 distance = zeros(n_seg, 1);
 distance_sum = 0;
 for i = 1: n_seg
-    distance(i) = dist(waypoints(i + 1), waypoints(i)');
+    distance(i) = dist(waypoints(i + 1, :), waypoints(i, :));
     distance_sum = distance_sum + distance(i);
 end
 
