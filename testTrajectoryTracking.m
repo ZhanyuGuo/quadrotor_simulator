@@ -78,12 +78,12 @@ disp('Start Simulation ...');
 while (time <= t_M)
     % External disturbance
     params.Fd = randn(3, 1) * fnoise;
+    params.Md = randn(3, 1) * fnoise;
 
     % Run simulation for cstep
     timeint = time: t_step: time + c_step;
     [~, xsave] = ode45(@(t, s) quadEOM_readonly(t, s, F, M, params), timeint', true_s);
     true_s = xsave(end, :)';
-
 
     des_s = zeros(13, 1);
     k = floor((time + c_step) / c_step);
