@@ -4,7 +4,7 @@
 close all; clear; clc;
 
 %% add path
-addpath(genpath('./trajectory_generation/'), genpath('./controller'),  genpath('./utils'));
+addpath(genpath('./trajectory_generation'), genpath('./controller'),  genpath('./utils'), genpath('./model'));
 
 %% configurations
 % time
@@ -54,7 +54,7 @@ end
 params = quadModel_readonly();
 
 % state
-start  = [x_des(1); y_des(1); z_des(1)];
+start  = [x_des(1) + 1.0; y_des(1) - 1.0; 0.0];
 true_s = init_state(start);
 
 % input
