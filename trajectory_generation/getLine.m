@@ -1,4 +1,5 @@
 function [poly_coef_x, poly_coef_y, ts] = getLine(waypoints, t_M)
+% @brief: get line trajectory
 n_seg = size(waypoints, 1) - 1;  % segment number
 ts    = zeros(n_seg, 1);         % time distribution
 
@@ -11,7 +12,7 @@ for i = 1: n_seg
 end
 
 for i = 1: n_seg
-    ts(i) = distance(i) / distance_sum * t_M;
+    ts(i) = t_M * distance(i) / distance_sum;
 end
 
 poly_coef_x = lineSolver(waypoints(:, 1), ts, n_seg);

@@ -38,11 +38,11 @@ a_list = [];  % angle
 disp('Start Simulation ...');
 while (time <= t_M)
     % impuse F
-    % if time >= t_M / 2 && time <= t_M / 2 + c_step
-    %     F = 1e6;
-    % else
-    %     F = params.mass * params.grav;
-    % end
+    if time >= t_M / 2 && time <= t_M / 2 + c_step
+        F = 1e6;
+    else
+        F = params.mass * params.grav;
+    end
 
     % step F
     % if time >= t_M / 2
@@ -103,7 +103,7 @@ while (time <= t_M)
     % end
 
     % sin Fdx
-    params.Fd(1) = 0.5 * sin(time);
+    % params.Fd(1) = 0.5 * sin(time);
 
     timeint = time: t_step: time + c_step;
     [~, xsave] = ode45(@(t, s) quadEOM_readonly(t, s, F, M, params), timeint', true_s);
@@ -186,7 +186,7 @@ legend('Mdx', 'Mdy', 'Mdz', 'Location', 'best');
 hold off;
 
 % configurations
-display_ratio   = 1.0;
+display_ratio   = 1.25;
 figure_width    = 1920 / display_ratio;
 figure_height   = 1080 / display_ratio;
 figure_size     = 800 / display_ratio;

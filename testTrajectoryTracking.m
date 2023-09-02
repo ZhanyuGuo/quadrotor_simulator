@@ -13,7 +13,7 @@ t_step = 0.002;  % time step for solving equations of motion
 c_step = 0.01;   % time step for controller
 t_M    = 30;     % total time
 
-display_ratio   = 1.0;
+display_ratio   = 1.25;
 figure_width    = 1920 / display_ratio;
 figure_height   = 1080 / display_ratio;
 figure_size     = 800 / display_ratio;
@@ -54,7 +54,7 @@ end
 params = quadModel_readonly();
 
 % state
-start  = [x_des(1) + 1.0; y_des(1) - 1.0; 0.0];
+start  = [x_des(1) + 1.0; y_des(1) - 1.0; 0.0];  % add some offsets
 true_s = init_state(start);
 
 % input

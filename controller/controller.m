@@ -1,7 +1,5 @@
 function [F, M] = controller(s, s_des, params)
-%%
 % @brief: simple linear controller
-%%
 m = params.mass;
 g = params.grav;
 I = params.I;

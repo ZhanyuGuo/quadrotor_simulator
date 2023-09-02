@@ -7,7 +7,7 @@ close all; clear; clc;
 addpath(genpath('./trajectory_generation/'), genpath('./controller'));
 
 %% configurations
-display_ratio   = 1.0;
+display_ratio   = 1.25;
 figure_width    = 1920 / display_ratio;
 figure_height   = 1080 / display_ratio;
 figure_size     =  800 / display_ratio;

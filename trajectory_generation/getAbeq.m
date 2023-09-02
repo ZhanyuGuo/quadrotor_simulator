@@ -1,5 +1,5 @@
 function [Aeq, beq]= getAbeq(n_seg, n_order, waypoints, ts, start_cond, end_cond)
-
+% @brief: get Aeq and beq
 n_poly_perseg = n_order + 1;
 n_all_poly = n_seg * n_poly_perseg;
 

@@ -1,7 +1,5 @@
 function [poly_coef_x, poly_coef_y, ts, n_order, n_seg] = getMinimumSnapUnit(waypoints)
-%%
-% @brief:   get minimum-snap trajectory on unit time
-%%
+% @brief: get minimum-snap trajectory on unit time
 n_order = 7;                        % order of poly
 n_seg   = size(waypoints, 1) - 1;   % segment number
 ts      = zeros(n_seg, 1);          % time distribution

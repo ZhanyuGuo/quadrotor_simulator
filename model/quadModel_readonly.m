@@ -1,8 +1,5 @@
 function params = quadModel_readonly()
-%%
-% @brief:  get quadrotor model parameters, add whatever you want here
-% @return: parameters for global used
-%%
+% @brief: get quadrotor model parameters, add whatever you want here
 m = 0.5;
 g = 9.81;
 I = [2.32e-3, 0, 0; ...

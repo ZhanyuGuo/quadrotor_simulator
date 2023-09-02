@@ -1,10 +1,11 @@
 function waypoints = setPoints3(f)
+% @brief: set 3d points
 figure(f);
 k = 1;
 while (1)
     p = ginput(1);
     if size(p, 1) == 0
-        break;
+        break
     else
         z = input('Input z = ');
         scatter3(p(1), p(2), z, 'MarkerEdgeColor', 'black', 'LineWidth', 2);

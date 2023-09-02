@@ -1,7 +1,5 @@
 function [poly_coef_x, poly_coef_y, ts, n_order, n_seg] = getMinimumSnap(waypoints, t_M)
-%%
-% @brief:   get minimum-snap trajectory
-%%
+% @brief: get 2d minimum-snap trajectory
 n_order = 7;                        % order of poly
 n_seg   = size(waypoints, 1) - 1;   % segment number
 ts      = zeros(n_seg, 1);          % time distribution
@@ -15,7 +13,7 @@ for i = 1: n_seg
 end
 
 for i = 1: n_seg
-    ts(i) = distance(i) / distance_sum * t_M;
+    ts(i) = t_M * distance(i) / distance_sum;
 end
 
 poly_coef_x = minimumSnapQPSolver(waypoints(:, 1), ts, n_seg, n_order);

@@ -1,4 +1,5 @@
 function [poly_coef_x, poly_coef_y, ta] = getPoly(waypoints, t_M)
+% @brief: get lagrange trajectory
 n_seg = size(waypoints, 1) - 1;   % segment number
 ta    = zeros(n_seg, 1);          % time distribution
 
@@ -10,9 +11,9 @@ for i = 1: n_seg
     distance_sum = distance_sum + distance(i);
 end
 
-ta(1) = distance(1) / distance_sum * t_M;
+ta(1) = t_M * distance(1) / distance_sum;
 for i = 2: n_seg
-    ta(i) = distance(i) / distance_sum * t_M + ta(i - 1);
+    ta(i) = t_M * distance(i) / distance_sum + ta(i - 1);
 end
 
 poly_coef_x = LagrangeSolver(waypoints(:, 1), [0; ta], n_seg + 1);

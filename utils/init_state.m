@@ -1,5 +1,5 @@
-function s = init_state( start )
-%INIT_STATE Initialize 13 x 1 state vector
+function s = init_state(start)
+% @brief: initialize 13 x 1 state vector
 
 phi0   = 0.0;
 theta0 = 0.0;

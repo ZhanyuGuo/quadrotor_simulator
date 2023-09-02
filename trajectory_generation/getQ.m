@@ -1,4 +1,5 @@
 function Q = getQ(n_seg, n_order, ts)
+% @brief: get Q matrix
 Q = [];
 n_poly_perseg = n_order + 1;
 for j = 1: n_seg
